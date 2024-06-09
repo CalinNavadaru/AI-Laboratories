@@ -1,0 +1,281 @@
+import bisect
+
+
+def problema10(matrix: list[list[int]]) -> int:
+    maxim = 0
+    index = 0
+    for i in range(1, len(matrix)):
+        index_1 = bisect.bisect_left(matrix[i], 1)
+        if maxim < len(matrix[index]) - index_1:
+            maxim = len(matrix[index]) - index_1
+            index = i
+
+    return index
+
+
+assert (problema10([[0, 0, 0, 1, 1],
+                    [0, 1, 1, 1, 1],
+                    [0, 0, 1, 1, 1]]) == 1)
+assert (problema10([[0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1],
+                    [0, 0, 1, 1, 1]]) == 2)
+
+
+def index_linie_max_1(matrice):
+    nr_linii = len(matrice)
+    nr_coloane = len(matrice[0])
+    max_1 = 0
+    index_max_1 = 0
+
+    for i in range(nr_linii):
+        # Căutare binară pe linia curentă pentru a găsi ultimul element de 1
+        stanga, dreapta = 0, nr_coloane - 1
+        while stanga <= dreapta:
+            mijloc = (stanga + dreapta) // 2
+            if matrice[i][mijloc] == 1:
+                stanga = mijloc + 1
+            else:
+                dreapta = mijloc - 1
+        # Actualizăm numărul maxim de 1 și indexul liniei corespunzătoare
+        if nr_coloane - 1 - dreapta > max_1:
+            max_1 = nr_coloane - 1 - dreapta
+            index_max_1 = i
+
+    return index_max_1 + 1
+
+
+# Exemplu de utilizare:
+matrice = [
+    [0, 0, 1, 1],
+    [0, 1, 1, 1],
+    [0, 0, 0, 1]
+]
+
+print("Indexul liniei cu cele mai multe elemente de 1:", index_linie_max_1(matrice))  # Output: 1
+
+print(index_linie_max_1([[0, 0, 0, 1, 1],
+                         [0, 1, 1, 1, 1],
+                         [0, 0, 1, 1, 1]]))
+assert (index_linie_max_1([[0, 0, 0, 1, 1],
+                           [0, 1, 1, 1, 1],
+                           [0, 0, 1, 1, 1]]) == 1)
+assert (index_linie_max_1([[0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 1],
+                           [0, 0, 1, 1, 1]]) == 2)
+
+def problema11_2(matrix):
+    if not matrix:
+        return
+
+    rows = len(matrix)
+    cols = len(matrix[0])
+
+    # Definim funcția de căutare în adâncime (DFS)
+    def dfs(i, j):
+        # Verificăm dacă coordonatele sunt valide și dacă elementul este 0
+        if rows > i >= 0 == matrix[i][j] and 0 <= j < cols:
+            # Marcam elementul ca fiind vizitat
+            matrix[i][j] = -1
+            # Apelăm recursiv pentru toate cele patru direcții
+            dfs(i + 1, j)
+            dfs(i - 1, j)
+            dfs(i, j + 1)
+            dfs(i, j - 1)
+
+    # Parcurgem marginea matricei și începem căutarea în adâncime (DFS)
+    for i in range(rows):
+        dfs(i, 0)
+        dfs(i, cols - 1)
+
+    for j in range(cols):
+        dfs(0, j)
+        dfs(rows - 1, j)
+
+    # Înlocuim toate 0-urile complet înconjurate de 1 cu 1
+    for i in range(0, rows):
+        for j in range(0, cols):
+            if matrix[i][j] == 0:
+                matrix[i][j] = 1
+            elif matrix[i][j] == -1:
+                matrix[i][j] = 0
+
+    return matrix
+
+
+# Exemplu de utilizare:
+matrix = [
+    [1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1]
+]
+
+problema11_2(matrix)
+
+# Afisare rezultat
+for row in matrix:
+    print(row)
+
+
+def problema9(matrix: list[list[int]], query: list[((int, int), (int, int))]) -> list[int]:
+    new_matrix = [[0] * len(matrix[0]) for _ in range(len(matrix))]
+    new_matrix[0][0] = matrix[0][0]
+    for i in range(1, len(matrix)):
+        new_matrix[i][0] = matrix[i][0] + new_matrix[i - 1][0]
+    for j in range(1, len(matrix[0])):
+        new_matrix[0][j] = matrix[0][j] + new_matrix[0][j - 1]
+    for i in range(1, len(matrix)):
+        for j in range(1, len(matrix[i])):
+            new_matrix[i][j] = matrix[i][j] + new_matrix[i - 1][j] + new_matrix[i][j - 1] - new_matrix[i - 1][j - 1]
+
+    rez = []
+    for s, t in query:
+        a, b = s
+        x, y = t
+        r = new_matrix[a - 1][y] if new_matrix[a - 1][y] > 0 else 0
+        r1 = new_matrix[x][b - 1] if new_matrix[x][b - 1] > 0 else 0
+        r2 = new_matrix[a - 1][b - 1] if new_matrix[a - 1][b - 1] > 0 else 0
+        rez.append(new_matrix[x][y] - r - r1 + r2)
+
+    return rez
+
+
+assert (problema9([[0, 2, 5, 4, 1],
+                   [4, 8, 2, 3, 7],
+                   [6, 3, 4, 6, 2],
+                   [7, 3, 1, 8, 3],
+                   [1, 5, 7, 9, 4]], [((1, 1), (3, 3)), ((2, 2), (4, 4))]) == [38, 44])
+
+
+def suma_submatricelor_ultra_eficient(matrice, coordonate):
+    n = len(matrice)
+    m = len(matrice[0])
+
+    # Calculăm matricea auxiliară de sume parțiale
+    sume_partiale = [[0] * m for _ in range(n)]
+    sume_partiale[0][0] = matrice[0][0]
+
+    # Calculăm sumele parțiale pentru prima linie și prima coloană
+    for i in range(1, n):
+        sume_partiale[i][0] = sume_partiale[i - 1][0] + matrice[i][0]
+    for j in range(1, m):
+        sume_partiale[0][j] = sume_partiale[0][j - 1] + matrice[0][j]
+
+    # Calculăm restul sumelor parțiale
+    for i in range(1, n):
+        for j in range(1, m):
+            sume_partiale[i][j] = sume_partiale[i - 1][j] + sume_partiale[i][j - 1] - sume_partiale[i - 1][j - 1] + \
+                                  matrice[i][j]
+
+    rezultate = []
+    for coord in coordonate:
+        p, q = coord[0]
+        r, s = coord[1]
+
+        # Calculăm suma elementelor din submatrice folosind sumele parțiale
+        suma_submatrice = sume_partiale[r][s]
+        if p > 0:
+            suma_submatrice -= sume_partiale[p - 1][s]
+        if q > 0:
+            suma_submatrice -= sume_partiale[r][q - 1]
+        if p > 0 and q > 0:
+            suma_submatrice += sume_partiale[p - 1][q - 1]
+        rezultate.append(suma_submatrice)
+
+    return rezultate
+
+
+# Exemplu de utilizare:
+matrice_exemplu = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+]
+
+coordonate_exemplu = [((0, 0), (1, 1)), ((1, 0), (2, 2))]
+
+rezultate = suma_submatricelor_ultra_eficient(matrice_exemplu, coordonate_exemplu)
+print(rezultate)  # Output: [12, 26]
+
+
+import math
+
+
+def problema2(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+
+
+assert (problema2((1, 5), (4, 1)) == 5)
+assert (problema2((1, 0), (4, 0)) == math.sqrt(9))
+
+import math
+
+
+def euclidean_distance(point1, point2):
+    x1, y1 = point1
+    x2, y2 = point2
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+
+# Exemplu de utilizare
+point1 = (1, 5)
+point2 = (4, 1)
+distance = euclidean_distance(point1, point2)
+print("Distanța între", point1, "și", point2, "este:", distance)
+
+def problema1(text: str) -> str:
+    last_word = ""
+    for word in text.split(" "):
+        if last_word < word:
+            last_word = word
+
+    return last_word
+
+
+assert (problema1("Ana are mere rosii si galbene") == "si")
+assert (problema1("Nicolescu e smecher") == "smecher")
+
+
+def fibonacci(n):
+    fib_sequence = [0, 1]
+    while len(fib_sequence) < n:
+        fib_sequence.append(fib_sequence[-1] + fib_sequence[-2])
+    return fib_sequence[:n]
+
+# Test the function
+n = 10
+fib_numbers = fibonacci(n)
+print(fib_numbers)
+
+
+def is_prime(num):
+    if num < 2:
+        return False
+    for i in range(2, int(num ** 0.5) + 1):
+        if num % i == 0:
+            return False
+    return True
+
+def generate_primes(n):
+    count = 0
+    num = 2
+    while count < n:
+        if is_prime(num):
+            yield num
+            count += 1
+        num += 1
+
+n = 10
+prime_generator = generate_primes(n)
+prime_numbers = [prime for prime in prime_generator]
+print(prime_numbers)
+
+
+def print_star(size):
+    for i in range(size):
+        print('*' * size)
+
+# Example: Print a star of size 5
+print_star(5)
+
